@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Hello World",
+    "slug": "hello-world",
+    "date": "2026-11-18",
+    "description": "The first post on my blog: what to expect here and how this blog is built.",
+    "tags": [
+      "meta",
+      "introduction"
+    ],
+    "cover": "",
+    "file": "posts/hello-world.md",
+    "readingTime": 1
+  }
+]

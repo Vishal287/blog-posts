@@ -1,0 +1,17 @@
+{
+  "name": "blog-posts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Markdown blog content and a generated index.json for a separate portfolio site.",
+  "type": "module",
+  "scripts": {
+    "build:index": "node scripts/build-index.mjs",
+    "new-post": "node scripts/new-post.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  }
+}
