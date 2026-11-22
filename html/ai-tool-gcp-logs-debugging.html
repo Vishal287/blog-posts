@@ -1,0 +1,56 @@
+<p>Something breaks in production. You open GCP Logging, scroll through hundreds of entries, and copy the useful bits into your AI coding assistant. Then you explain the codebase again, and the issue again, and hope it understands enough to help.</p>
+<p>I was doing that almost every day. So I built a small tool that does most of it for me. It pulls the logs, strips out sensitive data, hands the right context to Claude Code, and gives me a root cause analysis (RCA) and a fix I can review. In this post I&#39;ll walk you through why I built it, how it works, and what it changed for me.</p>
+<h2>AI made us ship faster, but debugging stayed slow</h2>
+<p>I&#39;m a software developer with 3+ years of experience. Like most teams right now, my company has been adopting AI quickly. I&#39;ve been using Claude Code for the last few months and the difference is huge: features that used to take a full sprint now take five or six days, tests included.</p>
+<p>So delivery got faster. But monitoring and observability didn&#39;t. We have automated alerts and thresholds, but when one fires, someone still has to open the logs and debug.</p>
+<p>That part was painful for me. When I got stuck on an issue, I had to collect the context by hand and paste it into my Claude Code session. And for security reasons, giving Claude Code direct access to our logs wasn&#39;t an option. Even if it were, I&#39;d still end up doing the investigation myself and explaining everything.</p>
+<p>I looked for an existing tool or workflow that solved this the way I wanted. I couldn&#39;t find one, so I combined a couple of approaches and built my own.</p>
+<h2>The idea: logs + Claude Code + the codebase</h2>
+<p>The tool connects three things:</p>
+<ol>
+<li><strong>The GCP CLI</strong>, to fetch logs</li>
+<li><strong>Claude Code</strong>, to analyze them and suggest fixes</li>
+<li><strong>The local codebase</strong>, so Claude Code can see the code that actually produced the error</li>
+</ol>
+<p>Quick confession: I vibe coded the whole app. But the idea and the design are mine. I explained to the coding agent exactly how it should work, and I understand what&#39;s happening inside it.</p>
+<h2>How I built it</h2>
+<h3>1. Frontend first</h3>
+<p>I started with the frontend. I wanted to figure out what I needed to see and what would be easy to read before writing any backend logic. Once that was clear, I moved to the backend, which uses Express and plain JavaScript.</p>
+<h3>2. A restricted GCP account</h3>
+<p>I created a new GCP account with limited permissions. It can fetch logs and nothing else. I set it up on my local machine so the tool runs locally.</p>
+<h3>3. A script to fetch logs</h3>
+<p>The first backend script fetches logs from GCP for a given time window and stores them on my machine. No exporting or uploading logs from somewhere else, which keeps things fast.</p>
+<h3>4. A script to run Claude Code</h3>
+<p>The second script runs Claude Code with strict restrictions, specific skills it&#39;s allowed to use, and a prepared prompt. On top of these two scripts I built APIs that send structured data to the frontend.</p>
+<h3>5. Project configuration</h3>
+<p>I made a JSON config file that holds the details of each GCP project: region, service name, service type and so on. In the UI there&#39;s a form to add a project, and it saves straight into that file. Now I can work with multiple projects without typing the configuration every time.</p>
+<p>The form also asks for the local path of the cloned repo. That&#39;s how the tool knows where the code for each project lives.</p>
+<h2>What the workflow looks like now</h2>
+<p>Here&#39;s what happens when I use it:</p>
+<ol>
+<li><strong>I pick a time window.</strong> The backend starts a child process that fetches the logs from GCP and saves them in a local folder.</li>
+<li><strong>The dashboard shows the errors.</strong> I can see a list of errors with some analytics: when errors spiked, and how many times each error happened in that window.</li>
+<li><strong>I click &quot;Generate report&quot;.</strong> The tool sends Claude Code the relevant information, not the full raw logs. GCP already groups the logs, so I only pass what&#39;s needed. Before anything goes out, IPs, headers and other sensitive data are masked.</li>
+<li><strong>Claude Code writes the RCA.</strong> It has the error context and the path to the local repo, so it can trace the error back to the code and explain the root cause.</li>
+<li><strong>I click &quot;Fix&quot;.</strong> Claude Code fixes the issue in my local code. Since it already has the full context, this is quick.</li>
+<li><strong>I review, test and open a PR.</strong> This step stays with me. I check the changes, run the tests and create the pull request.</li>
+</ol>
+<p>I don&#39;t paste anything by hand anymore.</p>
+<h2>The results</h2>
+<ul>
+<li><strong>Less time per issue.</strong> Checking logs used to take me 30-45 minutes. Now it&#39;s about 15 minutes, and that includes a proper fix.</li>
+<li><strong>Hidden issues got solved.</strong> Some bugs were hard to debug because they happened behind the scenes. With this tool, issues like that got fixed in a day.</li>
+<li><strong>One-click reports.</strong> If I need to share an error report with my team, I click once and it&#39;s ready.</li>
+<li><strong>I can multitask.</strong> While Claude Code is debugging and fixing, I work on something else.</li>
+</ul>
+<h2>Questions you might have</h2>
+<p><strong>&quot;Why not just check the logs in the GCP console?&quot;</strong>
+You can, but it&#39;s manual. And to actually fix the problem, I&#39;d still have to dig deeper and pass all the context to Claude Code myself.</p>
+<p><strong>&quot;Why not give Claude Code direct access to the GCP CLI?&quot;</strong>
+I work in the service sector, so security comes first. Logs contain a lot of sensitive information, and they need to be filtered before any AI sees them. A restricted account plus masking gives me that control.</p>
+<p><strong>&quot;Couldn&#39;t you use the Claude browser extension instead?&quot;</strong>
+That helps you read logs, but debugging still needs access to the code. And if I gave it repo access that way, I&#39;d still have to verify and test every change. My setup keeps the code local and the review step in my hands.</p>
+<h2>What&#39;s next</h2>
+<p>This is still a basic version. Whenever I run into a new need, I&#39;ll add it.</p>
+<p>If your team is shipping faster with AI but still debugging by hand, try connecting your logs, your codebase and your coding agent in a similar way. Even a simple version can save you a lot of time.</p>
+<p>Have questions or ideas on how to improve it? reach out to me. I&#39;d love to hear how you&#39;re handling debugging on your team.</p>

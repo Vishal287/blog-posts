@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "title": "I Built an AI Tool That Reads My GCP Logs and Fixes the Bug for Me",
+    "slug": "ai-tool-gcp-logs-debugging",
+    "date": "2026-11-22",
+    "description": "How I combined the GCP CLI, Claude Code and my local codebase to cut log debugging from 30-45 minutes to about 15, without handing an AI full access to production logs.",
+    "tags": [
+      "GCP",
+      "Logging",
+      "Claude Code",
+      "Debugging",
+      "AI"
+    ],
+    "cover": "https://raw.githubusercontent.com/Vishal287/blog-posts/main/images/ai-tool-gcp-logs-debugging-cover.png",
+    "file": "posts/ai-tool-gcp-logs-debugging.md",
+    "html": "html/ai-tool-gcp-logs-debugging.html",
+    "readingTime": 6
+  }
+]
