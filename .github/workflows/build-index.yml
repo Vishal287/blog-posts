@@ -32,14 +32,15 @@ jobs:
 
       # No loop: the commit only touches index.json (outside the posts/** filter),
       # and pushes made with GITHUB_TOKEN never start new workflow runs.
-      - name: Commit index.json if it changed
+      - name: Commit index.json and html/ if they changed
         run: |
-          if git diff --quiet -- index.json; then
-            echo "index.json unchanged, nothing to commit."
+          # Stage first: plain "git diff" ignores new, untracked HTML files.
+          git add -A -- index.json html
+          if git diff --cached --quiet; then
+            echo "index.json and html/ unchanged, nothing to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.json
-          git commit -m "chore: update blog index"
+          git commit -m "chore: update blog index and html"
           git push

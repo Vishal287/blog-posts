@@ -1,12 +1,15 @@
-// Builds index.json from the front matter of every post in posts/.
+// Builds index.json from the front matter of every post in posts/,
+// and renders each published post's Markdown body to html/<slug>.html.
 // Usage: npm run build:index
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
+import { marked } from "marked";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const POSTS_DIR = path.join(ROOT, "posts");
+const HTML_DIR = path.join(ROOT, "html");
 const OUTPUT = path.join(ROOT, "index.json");
 
 const REQUIRED = ["title", "slug", "date"];
@@ -47,6 +50,7 @@ async function main() {
   const errors = [];
   const seenSlugs = new Map();
   const posts = [];
+  const htmlBySlug = new Map();
 
   for (const file of files) {
     const relPath = `posts/${file}`;
@@ -111,8 +115,10 @@ async function main() {
       tags: data.tags ?? [],
       cover: data.cover ?? "",
       file: relPath,
+      html: `html/${slug}.html`,
       readingTime: readingTime(content),
     });
+    htmlBySlug.set(slug, marked.parse(content));
   }
 
   if (errors.length) {
@@ -123,8 +129,18 @@ async function main() {
   }
 
   posts.sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+
+  // Rebuild html/ from scratch so deleted or re-drafted posts lose their HTML file.
+  await rm(HTML_DIR, { recursive: true, force: true });
+  await mkdir(HTML_DIR, { recursive: true });
+  for (const [slug, html] of htmlBySlug) {
+    await writeFile(path.join(HTML_DIR, `${slug}.html`), html);
+  }
+
   await writeFile(OUTPUT, JSON.stringify(posts, null, 2) + "\n");
-  console.log(`✔ Wrote index.json with ${posts.length} published post(s) (${files.length - posts.length} draft(s) skipped).`);
+  console.log(
+    `✔ Wrote index.json and ${posts.length} HTML file(s) in html/ (${files.length - posts.length} draft(s) skipped).`
+  );
 }
 
 main().catch((err) => {

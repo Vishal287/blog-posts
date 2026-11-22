@@ -6,13 +6,20 @@ The Markdown source for my blog. This repo holds no website, only content and au
 https://raw.githubusercontent.com/<your-username>/blog-posts/main/index.json
 ```
 
-and each post's Markdown from:
+and each post's rendered HTML from:
 
 ```
-https://raw.githubusercontent.com/<your-username>/blog-posts/main/<file>
+https://raw.githubusercontent.com/<your-username>/blog-posts/main/<html>
 ```
 
-where `<file>` is the post's `file` value from `index.json` (for example `posts/hello-world.md`).
+where `<html>` is the post's `html` value from `index.json` (for example `html/hello-world.html`). The file is an HTML fragment (no `<html>` or `<head>`), meant to be inserted into the portfolio's own layout:
+
+```jsx
+const html = await fetch(url).then((r) => r.text());
+<article dangerouslySetInnerHTML={{ __html: html }} />
+```
+
+raw.githubusercontent.com serves it as `text/plain`, which is fine because it is read with `r.text()`. The original Markdown is still available at the post's `file` path.
 
 ## Layout
 
@@ -20,10 +27,11 @@ where `<file>` is the post's `file` value from `index.json` (for example `posts/
 | --- | --- |
 | `posts/` | One `.md` file per post. The file name is the slug plus `.md`. |
 | `images/` | Images used in posts. |
-| `scripts/build-index.mjs` | Checks every post and writes `index.json`. |
+| `scripts/build-index.mjs` | Checks every post, writes `index.json`, and renders each published post to `html/`. |
 | `scripts/new-post.mjs` | Creates a new draft post. |
-| `.github/workflows/build-index.yml` | Rebuilds `index.json` on every push to `main` that changes `posts/`. |
+| `.github/workflows/build-index.yml` | Rebuilds `index.json` and `html/` on every push to `main` that changes `posts/`. |
 | `index.json` | Generated list of published posts. Don't edit it by hand. |
+| `html/` | Generated HTML for each published post (`<slug>.html`). Rebuilt from scratch on every build, so don't edit it by hand. |
 
 ## Setup
 
@@ -64,7 +72,7 @@ Drafts are skipped, so a new post won't appear in `index.json` yet. If a post ha
    git push
    ```
 
-The GitHub Action rebuilds `index.json` and commits it as `chore: update blog index`. The portfolio picks up the change on its next fetch. raw.githubusercontent.com caches files for up to about 5 minutes.
+The GitHub Action rebuilds `index.json` and `html/` and commits them as `chore: update blog index and html`. The portfolio picks up the change on its next fetch. raw.githubusercontent.com caches files for up to about 5 minutes.
 
 ### Edit
 
@@ -130,6 +138,7 @@ An array of published posts, newest first:
     "tags": ["meta", "introduction"],
     "cover": "",
     "file": "posts/hello-world.md",
+    "html": "html/hello-world.html",
     "readingTime": 1
   }
 ]
