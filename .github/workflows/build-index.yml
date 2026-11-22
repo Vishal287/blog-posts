@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Pinned to commit SHAs: a tag can be moved to new code, a commit can't.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
           cache: npm
@@ -31,8 +31,7 @@ jobs:
 
       - run: npm run build:index
 
-      # No loop: the commit only touches index.json (outside the posts/** filter),
-      # and pushes made with GITHUB_TOKEN never start new workflow runs.
+      # No loop: pushes made with GITHUB_TOKEN never start new workflow runs.
       - name: Commit index.json and html/ if they changed
         run: |
           # Stage first: plain "git diff" ignores new, untracked HTML files.

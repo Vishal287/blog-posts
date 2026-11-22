@@ -46,7 +46,12 @@ function readingTime(content) {
 }
 
 async function main() {
-  const files = (await readdir(POSTS_DIR)).filter((f) => f.endsWith(".md")).sort();
+  // Git doesn't store empty folders, so posts/ is missing when every post has been deleted.
+  const entries = await readdir(POSTS_DIR).catch((err) => {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  });
+  const files = entries.filter((f) => f.endsWith(".md")).sort();
   const errors = [];
   const seenSlugs = new Map();
   const posts = [];
